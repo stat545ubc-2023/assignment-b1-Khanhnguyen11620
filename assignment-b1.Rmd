@@ -9,7 +9,7 @@ __Total Points__: 100
 This assignment covers making a function in R, documenting it, and testing it. 
 
 
-## Exercise 1: Make a Function (25 points) and ## Exercise 2: Document your Function (20 points)
+## Exercise 1: Make a Function (25 points) and Exercise 2: Document your Function (20 points)
 
 In this exercise, you'll be making a function and fortifying it. The function need not be complicated. The function need not be "serious", but shouldn't be nonsense.
 
@@ -22,9 +22,9 @@ library(tidyverse)
 library(testthat)
 ```
 
-In this assignment, I will create a function to to generate the grade letter based on the grade scheme from https://students.ubc.ca/enrolment/courses/grades. For example: A is for score 80-100, B is for 70-79, C is for 60-69, D is for 50-59 and F (fail) is for score less than 50. 
+In this assignment, I will create a function to to generate the grade letter based on the grade scheme at UBC from https://students.ubc.ca/enrolment/courses/grades. For example: A is for score 80-100, B is for 70-79, C is for 60-69, D is for 50-59 and F (fail) is for score less than 50. 
 
-However, to make the function become generic and avoid magic numbers, we can set our own scale when using the function by setting the numbers for grade_D, grade_C, grade_B and grade_A variables. 
+However, to make the function become generic and avoid magic numbers, we can set our own scale when using the function by setting the numbers for lowest_D, lowest_C, lowest_B and lowest_A variables. 
 
 If the score is less than lowest_D, the grade letter will be "F".
 If the score is less than lowest_C, the grade letter will be "D".
@@ -32,21 +32,24 @@ If the score is less than lowest_B, the grade letter will be "C".
 If the score is less than lowest_A, the grade letter will be "B".
 Otherwise, the grade letter will be "A"
 
-lowest_D, lowest_C, lowest_B, lowest_A are the lowest score in the range of D, C, B and A, respectively. 
+lowest_D, lowest_C, lowest_B, lowest_A are the lowest score in the range of D, C, B and A, respectively.
 
 ```{r}
 #' Title: Determine the grade letter based on score input
 #'
-#'This function will create a new column called 'grade_letter' which contains the grade letter based on the number of score of students in the imported data. 
+#'This function will create a new column called 'grade_letter' which contains the grade letter based on the number of scores of students in the imported data. 
 #'
-#' @param data is a imported data frame which may contain information of students and their scores. The information can be anything (studentID, names, or date of birth)
-#' @param score_col is the name of the column which contains score variables (numeric variables)
-#' @param lowest_D is the lowest score in the score range for grade letter D 
-#' @param lowest_C is the lowest score in the score range for grade letter C
-#' @param lowest_B is the lowest score in the score range for grade letter B
-#' @param lowest_A is the lowest score in the score range for grade letter A  
+#' @param data is a variable that represents the imported data. It contains information of the students and their scores. The information can be anything (student's ID, name, major or date of birth). The reason why I named this 'data' is because it is informative and it can tell the user that the input should be a data frame. 
 #'
-#' @return a data frame which contains all the previous variables in the original data plus one new variable called 'grade letter'
+#' @param score_col is the name of the column which contains score variables (numeric variable). The reason why I named this 'score_col' is to remind the users to indicate which score column they want to use for converting to grade letters
+#' 
+#' @param lowest_D is the lowest score in the score range for grade letter D (numeric variable)
+#' @param lowest_C is the lowest score in the score range for grade letter C (numeric variable)
+#' @param lowest_B is the lowest score in the score range for grade letter B (numeric variable)
+#' @param lowest_A is the lowest score in the score range for grade letter A (numeric variable) 
+#'The reason why I named these variables is because it is also informative and directly tells the users what they should enter for these variables. 
+#'
+#' @return a data frame which contains all the previous variables in the original data plus one new variable called 'grade letter'.The 'grade_letter' column will contain the grade letter based on the number of score of students in the imported data.
 #' @export
 #'
 #' @examples
@@ -58,6 +61,7 @@ grade_letter <- function(data, score_col, lowest_D, lowest_C, lowest_B, lowest_A
   if (!is.data.frame(data)) {
     stop("The input must be a dataframe or tibble")
   }
+  
   # Check if score_col exist in the data
   if (!score_col %in% colnames(data)) {
     stop("The score_col does not exist in the data")
@@ -76,7 +80,7 @@ grade_letter <- function(data, score_col, lowest_D, lowest_C, lowest_B, lowest_A
   # filter NA values
   data <- data[!is.na(data[[score_col]]), ]
   
-  # create a new column 'letter' based on the score in score column (score_col)
+  # create a new column 'grade_letter' based on the score in score column (score_col)
   results <- data %>% 
     mutate(grade_letter = if_else(.data[[score_col]] < lowest_D, "F",
                         if_else(.data[[score_col]] < lowest_C, "D",
@@ -94,7 +98,7 @@ Demonstrate the usage of your function with a few examples. Use one or more new 
 
 Note: If you want to deliberately show an error, you can use `error = TRUE` in your code chunk option.
 
-1. First, we should create a data that contains information of student (StudentID and Student_Name) and one column for their Score. The data input can contain any information of students as long as it has one column for the score. 
+1. First, we should create a data that contains information of student (StudentID and Student_Name) and one column for their scores. The data input can contain any information of students but it must have one column for the score. 
 
 ```{r}
 student_grades <- data.frame(
@@ -103,9 +107,10 @@ student_grades <- data.frame(
   Score = c(89,75,63,85, 93)
 )
 
-print(students_grade)
+print(student_grades)
 ```
-2. Now we will use the function to create a new column which contains grade letter based on the score. 
+
+2. Now we will use the function to create a new column which contains grade letter based on the score. For example, I chose lowest_D = 50, lowest_C = 60, lowest_B =70 and lowest_A =80. 
 
 ```{r}
 grade_letter(student_grades,"Score",50,60,70,80)
@@ -147,15 +152,15 @@ Set1 <- data.frame(
 ```{r}
 Results1 <- grade_letter(Set1,"Score",50,60,70,80) 
 test_that("Data with no NA's",{
-  expect_is(Results1, "data.frame")
-  expect_equal(Results1$grade_letter[1], "A")
+  expect_is(Results1, "data.frame") #test if the result is a data frame
+  expect_equal(Results1$grade_letter[1], "A") #test of the first grade letter for John is A
 })
 ```
 
 __Test for data with NA's__
 
 ```{r}
-Set1 <- data.frame(
+Set2 <- data.frame(
   StudentID = c(1,2,3,4,5),
   Student_Name = c('John','Sarah','Mike','James','Thomas'),
   Score = c(89,75,NA,85, 93)
@@ -165,7 +170,7 @@ Set1 <- data.frame(
 ```{r}
 Results2 <- grade_letter(Set2,"Score",50,60,70,80) 
 test_that("Data with NA's",{
-  expect_equal(nrow(Results2), 4)
+  expect_equal(nrow(Results2), 4) # test if the function filter the NA column. The result should only contain 4 columns
 })
 ```
 
@@ -184,6 +189,7 @@ test_that("Data with different type",{
  expect_error(grade_letter(Set3,"Score",50,60,70,80),"The score must be numeric")
 })
 ```
+
 __Vector of length 0, like `numeric(0)`__
 ```{r}
 Set4 <- data.frame(
@@ -218,6 +224,6 @@ test_that("Data with no score_column",{
 ```
 
 
-We passed all the four tests above.
+We passed all the four tests above. 
 
 

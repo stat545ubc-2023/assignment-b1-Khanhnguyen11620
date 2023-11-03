@@ -1,6 +1,6 @@
 ---
-title: "Assignment B-1: Making a function"
-output: html_document
+title: "Assignment B-1: Making a function - Khanh Nguyen"
+output: github_document
 ---
 
 __Total Points__: 100
@@ -8,67 +8,114 @@ __Total Points__: 100
 
 This assignment covers making a function in R, documenting it, and testing it. 
 
-## Setup
 
-1. Go to canvas to get your invitation to create a GitHub repository for this project. You can find this in the description of Assignment B-1. Name your repo as you wish, so long as it's informative. 
-
-2. Make a new Rmd file containing all of your code. Be sure to use some dialogue between code chunks.
-
-## Tidy Submission (15 points)
-
-Follow these steps to submit your work. Be sure to familiarize yourself with the rubric for a tidy submission below, before doing these steps.
-
-1. Make a README file for your repository. It should be a brief document letting a visitor know what's in this repository (at a high level) and some key things they should know about how to use the files in the repository. 
-2. Tag a release in your GitHub repository corresponding to your submission before the deadline.
-3. Grab the URL corresponding to your tagged release, and submit that to canvas. Make sure the TAs and Lucy can see your repository! Either it should be public or private with TAs and Lucy added as collaborators. 
-
-**Rubric**:
-
-- The above steps were followed.
-- Your work must be reproducible from beginning to end, error-free.
-- Code should adopt a consistent and easy-to-read style -- ideally, the [tidyverse style](https://style.tidyverse.org/), although we're certainly not looking for strict adherence. 
-- You use proper English, spelling, and grammar, and write concisely. If there's any uncertainty in determining a grade here, the [UBC MDS writing rubric](https://github.com/UBC-MDS/public/blob/master/rubric/rubric_writing.md) will be referred to.
-- If there's any further uncertainty in determining a grade for this tidy submission portion, the [UBC MDS mechanics rubric](https://github.com/UBC-MDS/public/blob/master/rubric/rubric_mech.md) will be referred to.
-
-## Exercise 1: Make a Function (25 points)
+## Exercise 1: Make a Function (25 points) and ## Exercise 2: Document your Function (20 points)
 
 In this exercise, you'll be making a function and fortifying it. The function need not be complicated. The function need not be "serious", but shouldn't be nonsense.
 
-__Function Ideas__
+### Loading the library 
 
-- Did you repeat any code for a data analysis in STAT 545A? If so, consider making a function for this action.
-- Consider bundling a specific `group_by() %>% summarise()` workflow.
-- Write a _wrapper_ around an existing function. 
-  - For example, perhaps accepting a narrower range of inputs (like not allowing logical vectors), or providing a different output.
-  - A specific example: the [`rqdist()` function](https://github.com/vincenzocoia/rqdist/blob/master/R/rqdist.R#L1) is a wrapper around `quantreg::rq()`, narrowing its functionality.
-  - It's usually better to narrow a function's focus than to broaden, so that a function doesn't end up doing too much.
-- Make a special plot that you'd want to repeat when exploring your data.
-- ...
+First, we will load the packages: `tidyverse` and `testthat`.  `tidyverse` includes some functions used to create our new function, and `testthat` was used to test our new function. 
 
-__Guidelines__
+```{r}
+library(tidyverse)
+library(testthat)
+```
 
-- Your function should not rely on anything from your working environment.
-- Your function should not rely on "magic numbers" -- pre-selected numbers (or options) that appear inside the function that can't be accessed by a user of the function. 
-    - For example, maybe `quantile(x, type = 1, ...)` appears in your function. The choice of 1 is arbitrary -- unless you're making a function like `quantile_type_1()`. 
-- Your function should be reasonably flexible on its inputs. Here is an example of a function that is *not* reasonably flexible: a function called `count_missing_values_by_group()` that only works when the data frame has columns that are all of type fct. 
-- The output is consistent -- for example, always gives a list. An example of inconsistent output: `sapply(1:3, seq_len)` gives a list, and `sapply(1:3, sqrt)` gives an (atomic) vector.
-- Your function includes appropriate arguments. (Do you handle NA's appropriately? Are you using the ellipsis properly? etc.)
+In this assignment, I will create a function to to generate the grade letter based on the grade scheme from https://students.ubc.ca/enrolment/courses/grades. For example: A is for score 80-100, B is for 70-79, C is for 60-69, D is for 50-59 and F (fail) is for score less than 50. 
 
-## Exercise 2: Document your Function (20 points)
+However, to make the function become generic and avoid magic numbers, we can set our own scale when using the function by setting the numbers for grade_D, grade_C, grade_B and grade_A variables. 
 
-In the same code chunk where you made your function, document the function using [roxygen2 tags](https://roxygen2.r-lib.org/articles/rd-formatting.html). Be sure to include:
+If the score is less than lowest_D, the grade letter will be "F".
+If the score is less than lowest_C, the grade letter will be "D".
+If the score is less than lowest_B, the grade letter will be "C".
+If the score is less than lowest_A, the grade letter will be "B".
+Otherwise, the grade letter will be "A"
 
-1. Title.
-2. Function description: In 1-2 brief sentences, describe what the function does.
-3. Document each argument with the `@param` tag, _making sure to justify why you named the parameter as you did_.
-    - (Justification for naming is not often needed, but we want to hear your reasoning.)
-4. What the function returns, using the `@return` tag. 
+lowest_D, lowest_C, lowest_B, lowest_A are the lowest score in the range of D, C, B and A, respectively. 
+
+```{r}
+#' Title: Determine the grade letter based on score input
+#'
+#'This function will create a new column called 'grade_letter' which contains the grade letter based on the number of score of students in the imported data. 
+#'
+#' @param data is a imported data frame which may contain information of students and their scores. The information can be anything (studentID, names, or date of birth)
+#' @param score_col is the name of the column which contains score variables (numeric variables)
+#' @param lowest_D is the lowest score in the score range for grade letter D 
+#' @param lowest_C is the lowest score in the score range for grade letter C
+#' @param lowest_B is the lowest score in the score range for grade letter B
+#' @param lowest_A is the lowest score in the score range for grade letter A  
+#'
+#' @return a data frame which contains all the previous variables in the original data plus one new variable called 'grade letter'
+#' @export
+#'
+#' @examples
+#' grade_letter(student_grades,"Score",50,60,70,80)
+#'
+grade_letter <- function(data, score_col, lowest_D, lowest_C, lowest_B, lowest_A) {
+  
+  # check if the data imported is a data frame
+  if (!is.data.frame(data)) {
+    stop("The input must be a dataframe or tibble")
+  }
+  # Check if score_col exist in the data
+  if (!score_col %in% colnames(data)) {
+    stop("The score_col does not exist in the data")
+  }
+ 
+  # check if the score column is a numeric variable
+  if (!is.numeric(data[[score_col]])) {
+    stop("The score must be numeric")
+  }
+  
+  # check if lowest_D, lowest_C, lowest_B, lowest_A are numeric variables
+  if (!is.numeric(lowest_D) | !is.numeric(lowest_C) | !is.numeric(lowest_B)| !is.numeric(lowest_A)) {
+    stop("The grades must be numeric")
+  }
+      
+  # filter NA values
+  data <- data[!is.na(data[[score_col]]), ]
+  
+  # create a new column 'letter' based on the score in score column (score_col)
+  results <- data %>% 
+    mutate(grade_letter = if_else(.data[[score_col]] < lowest_D, "F",
+                        if_else(.data[[score_col]] < lowest_C, "D",
+                        if_else(.data[[score_col]] < lowest_B, "C",
+                        if_else(.data[[score_col]] < lowest_A, "B", "A")))))
+  return(results)
+  
+}
+```
+
 
 ## Exercise 3: Include examples (15 points)
 
 Demonstrate the usage of your function with a few examples. Use one or more new code chunks, describing what you're doing.
 
 Note: If you want to deliberately show an error, you can use `error = TRUE` in your code chunk option.
+
+1. First, we should create a data that contains information of student (StudentID and Student_Name) and one column for their Score. The data input can contain any information of students as long as it has one column for the score. 
+
+```{r}
+student_grades <- data.frame(
+  StudentID = c(1,2,3,4,5),
+  Student_Name = c('John','Sarah','Mike','James','Thomas'),
+  Score = c(89,75,63,85, 93)
+)
+
+print(students_grade)
+```
+2. Now we will use the function to create a new column which contains grade letter based on the score. 
+
+```{r}
+grade_letter(student_grades,"Score",50,60,70,80)
+```
+3. If we want to have a higher grade scale, let's make lowest_A = 90, lowest_B = 80, lowest_C = 70 and lowest_D =60. Now we can see that only one student get an A. 
+
+```{r}
+grade_letter(student_grades,"Score",60,70,80,90)
+```
+
 
 ## Exercise 4: Test the Function (25 points)
 
@@ -86,3 +133,91 @@ Example of non-redundant inputs:
 Example of redundant inputs:
 
 - Providing a different number (unless one of these numbers have some significance, like an extreme point -- just tell us if that's the case)
+
+__Test for data with no NA's__
+
+```{r}
+Set1 <- data.frame(
+  StudentID = c(1,2,3,4,5),
+  Student_Name = c('John','Sarah','Mike','James','Thomas'),
+  Score = c(89,75,63,85, 93)
+)
+```
+
+```{r}
+Results1 <- grade_letter(Set1,"Score",50,60,70,80) 
+test_that("Data with no NA's",{
+  expect_is(Results1, "data.frame")
+  expect_equal(Results1$grade_letter[1], "A")
+})
+```
+
+__Test for data with NA's__
+
+```{r}
+Set1 <- data.frame(
+  StudentID = c(1,2,3,4,5),
+  Student_Name = c('John','Sarah','Mike','James','Thomas'),
+  Score = c(89,75,NA,85, 93)
+)
+```
+
+```{r}
+Results2 <- grade_letter(Set2,"Score",50,60,70,80) 
+test_that("Data with NA's",{
+  expect_equal(nrow(Results2), 4)
+})
+```
+
+
+__Vector of a different type (if relevant)__
+```{r}
+Set3 <- data.frame(
+  StudentID = c(1,2,3,4,5),
+  Student_Name = c('John','Sarah','Mike','James','Thomas'),
+  Score = c("Good","Fair","Low","Good", "Good")
+)
+```
+
+```{r}
+test_that("Data with different type",{
+ expect_error(grade_letter(Set3,"Score",50,60,70,80),"The score must be numeric")
+})
+```
+__Vector of length 0, like `numeric(0)`__
+```{r}
+Set4 <- data.frame(
+  StudentID = numeric(0),
+  Student_Name =character(0),
+  Score = numeric(0)
+)
+```
+
+```{r}
+Results4 <-grade_letter(Set4,"Score",50,60,70,80) 
+
+test_that("Data with vector of length 0", {
+  expect_true(length(Results4$grade_type) == 0)
+})
+
+```
+
+__Test for data with no score_column exist__
+
+```{r}
+Set5 <- data.frame(
+  StudentID = c(1,2,3,4,5),
+  Student_Name = c('John','Sarah','Mike','James','Thomas')
+)
+```
+
+```{r}
+test_that("Data with no score_column",{
+ expect_error(grade_letter(Set5,"Score-s",50,60,70,80),"The score_col does not exist in the data")
+})
+```
+
+
+We passed all the four tests above.
+
+
